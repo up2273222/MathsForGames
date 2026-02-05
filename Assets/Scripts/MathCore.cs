@@ -61,6 +61,7 @@ public static class MathCore
         if (a > 0) return a;
         return a * -1;
     }
+
     
     //Unused --------------------------------------------------------
     public static float MFGSqrt(float n)
