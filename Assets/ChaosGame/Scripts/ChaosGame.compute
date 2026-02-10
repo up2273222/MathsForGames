@@ -1,0 +1,66 @@
+#pragma kernel GetAttractorPoints
+
+RWStructuredBuffer<float4> _AttractorPoints;
+
+//RWStructuredBuffer<uint> _ArgsBuffer;
+
+
+uint Hash(uint x)
+{
+   x ^= x >> 16;
+   x *= 0x7feb352d;
+   x ^= x >> 15;
+   x *= 0x846ca68b;
+   x ^= x >> 16;
+   return x;
+}
+
+[numthreads(256,1,1)]
+void GetAttractorPoints(uint3 id : SV_DispatchThreadID)
+{
+   if (id.x > 100000) {return;}
+   
+   float4 pos;
+   
+   if (id.x == 0)
+   {
+      pos = 0.0f;
+   }
+   else
+   {
+      pos = _AttractorPoints[id.x+id.y - 1];
+   }
+   
+   uint seed = id.x + id.y * 1024;
+   uint r = Hash(seed);
+   uint choice = r % 3;
+   
+   
+   if (choice == 0)
+   {
+     float4x4 m = float4x4(0.5f,0.0f,0.0f,0.0f,
+                           0.0f,0.5f,0.0f,0.36f,
+                           0.0f,0.0f,0.0f,0.0f,
+                           0.0f,0.0f,0.0f,1.0f);
+      pos = mul(pos,m);
+   }
+   else if (choice == 1)
+   {
+   float4x4 m = float4x4(0.5f,0.0f,0.0f,-0.5f,
+                         0.0f,0.5f,0.0f,-0.5f,
+                         0.0f,0.0f,0.0f,0.0f,
+                         0.0f,0.0f,0.0f,1.0f);
+      pos = mul(pos,m);
+   }
+   else if (choice == 2)
+   {
+   float4x4 m = float4x4(0.5f,0.0f,0.0f,0.5f,
+                         0.0f,0.5f,0.0f,-0.5f,
+                         0.0f,0.0f,0.0f,0.0f,
+                         0.0f,0.0f,0.0f,1.0f);
+      pos = mul(pos,m);
+   }
+   _AttractorPoints[id.x + id.y] = pos;
+   
+   
+}
