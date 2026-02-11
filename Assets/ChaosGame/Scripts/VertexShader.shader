@@ -27,22 +27,27 @@ Shader "Custom/VertexShader"
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
                 float size : PSIZE;
             };
             
-            StructuredBuffer<float4> AttractorPointsBufferShader;
+            StructuredBuffer<float3> AttractorPointsBufferShader;
 
-            v2f vert (meshdata v, uint instanceID : SV_VertexID)
+            v2f vert (uint VertexID : SV_VertexID)
             {
                 v2f o;
-                float3 localpos = v.vertex.xyz;
-                float4 worldpos = float4(AttractorPointsBufferShader[instanceID].xyz + localpos,1.0f);
-                o.vertex = UnityObjectToClipPos(worldpos);
-                o.uv = v.uv;
-                o.size = 100;
+                float3 pos = AttractorPointsBufferShader[VertexID].xyz;
+                
+                float4 worldPos = float4(pos.xyz,1.0f);
+                
+                o.vertex = UnityObjectToClipPos(worldPos);
+                
+                
+                o.size = 10;
+                
+                
                 return o;
+                
             }
 
             fixed4 frag (v2f i) : SV_Target

@@ -1,66 +1,62 @@
-#pragma kernel GetAttractorPoints
+#pragma kernel InitialiseAttractorPoints
+#pragma kernel IterateAttractorPoints
 
-RWStructuredBuffer<float4> _AttractorPoints;
+//RWStructuredBuffer<float4> _AttractorPoints;
+
+RWByteAddressBuffer _AttractorPoints;
+
+RWStructuredBuffer<float4x4> _AttractorMatrices;
+
+int randomiseOffset;
+
+uint iterationCount;
 
 //RWStructuredBuffer<uint> _ArgsBuffer;
 
 
-uint Hash(uint x)
-{
-   x ^= x >> 16;
-   x *= 0x7feb352d;
-   x ^= x >> 15;
-   x *= 0x846ca68b;
-   x ^= x >> 16;
-   return x;
+float hash(uint n) {
+   // integer hash copied from Hugo Elias
+   n = (n << 13U) ^ n;
+   n = n * (n * n * 15731U + 0x789221U) + 0x1376312589U;
+   return float(n & uint(0x7fffffffU)) / float(0x7fffffff);
 }
 
 [numthreads(256,1,1)]
-void GetAttractorPoints(uint3 id : SV_DispatchThreadID)
+void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
-   if (id.x > 100000) {return;}
-   
-   float4 pos;
-   
-   if (id.x == 0)
-   {
-      pos = 0.0f;
-   }
-   else
-   {
-      pos = _AttractorPoints[id.x+id.y - 1];
-   }
-   
-   uint seed = id.x + id.y * 1024;
-   uint r = Hash(seed);
-   uint choice = r % 3;
-   
-   
-   if (choice == 0)
-   {
-     float4x4 m = float4x4(0.5f,0.0f,0.0f,0.0f,
-                           0.0f,0.5f,0.0f,0.36f,
-                           0.0f,0.0f,0.0f,0.0f,
-                           0.0f,0.0f,0.0f,1.0f);
-      pos = mul(pos,m);
-   }
-   else if (choice == 1)
-   {
-   float4x4 m = float4x4(0.5f,0.0f,0.0f,-0.5f,
-                         0.0f,0.5f,0.0f,-0.5f,
-                         0.0f,0.0f,0.0f,0.0f,
-                         0.0f,0.0f,0.0f,1.0f);
-      pos = mul(pos,m);
-   }
-   else if (choice == 2)
-   {
-   float4x4 m = float4x4(0.5f,0.0f,0.0f,0.5f,
-                         0.0f,0.5f,0.0f,-0.5f,
-                         0.0f,0.0f,0.0f,0.0f,
-                         0.0f,0.0f,0.0f,1.0f);
-      pos = mul(pos,m);
-   }
-   _AttractorPoints[id.x + id.y] = pos;
+    uint gridWidth = 512;
+    float x = (id.x % gridWidth) / (float)gridWidth;
+    float y = (id.x / gridWidth) / (float)gridWidth;
+
+    float3 pos = float3(x * 2 - 1, y * 2 - 1, 0);
+
+ 
+ uint address = id.x * 12;
+ _AttractorPoints.Store3(address, asuint(pos));
+
+}
+
+
+[numthreads(256,1,1)]
+void IterateAttractorPoints(uint3 id : SV_DispatchThreadID)
+{
+   if (id.x >= iterationCount) {return;}
    
    
+   float3 pos = asfloat(_AttractorPoints.Load3(id.x * 12));
+   
+   /*
+   uint seed = hash(id.x + randomiseOffset * 1234);
+   uint index = id.x % 3;
+   float4x4 transform = _AttractorMatrices[index];
+   float4 p = float4(pos.xyz,1.0f);
+   pos = mul(transform,p);
+   */
+       
+   
+   
+   
+   
+    uint address = id.x * 12;
+    _AttractorPoints.Store3(address, asuint(pos));
 }
