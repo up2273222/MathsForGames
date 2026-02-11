@@ -59,6 +59,8 @@ namespace ChaosGame.Scripts
             
             chaosCompute.Dispatch(0,numGroups,1,1);
             
+            chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
+            
            
             
 
@@ -81,18 +83,26 @@ namespace ChaosGame.Scripts
 
         private void Start()
         {
-            positions = new Vector3[attractorPositionsBuffer.count];
-            attractorPositionsBuffer.GetData(positions);
+            //positions = new Vector3[attractorPositionsBuffer.count];
+            
         }
 
         private void Update()
         {
-                   chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
-                chaosCompute.SetInt("randomiseOffset", Mathf.CeilToInt(Random.Range(1, 1000000)));
-                chaosCompute.Dispatch(1,numGroups,1,1);
-                rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
+            chaosCompute.SetInt("currentFrame", Time.frameCount);
+            rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
+                
+
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                   // attractorPositionsBuffer.GetData(positions);
+                   
+                   chaosCompute.Dispatch(1,numGroups,1,1);
+                   
+                   
+                }
+                
                 Graphics.RenderPrimitives(rparams, MeshTopology.Points, chaosGameIterations,1);
-            
             
         }
 
