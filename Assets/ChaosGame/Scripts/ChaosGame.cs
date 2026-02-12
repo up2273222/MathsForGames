@@ -53,13 +53,7 @@ namespace ChaosGame.Scripts
             chaosCompute.SetBuffer (0,"_AttractorPoints", attractorPositionsBuffer);
             chaosCompute.SetInt("iterationCount", chaosGameIterations);
             
-            PopulateMatrixBuffer();
             
-            chaosCompute.SetBuffer(1,"_AttractorMatrices",matrixBuffer);
-            
-            chaosCompute.Dispatch(0,numGroups,1,1);
-            
-            chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
             
            
             
@@ -83,27 +77,33 @@ namespace ChaosGame.Scripts
 
         private void Start()
         {
-            //positions = new Vector3[attractorPositionsBuffer.count];
-            
+            CreateAttractor();
+
         }
 
         private void Update()
         {
-            chaosCompute.SetInt("currentFrame", Time.frameCount);
-            rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
-                
-
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                   // attractorPositionsBuffer.GetData(positions);
-                   
-                   chaosCompute.Dispatch(1,numGroups,1,1);
-                   
-                   
-                }
-                
                 Graphics.RenderPrimitives(rparams, MeshTopology.Points, chaosGameIterations,1);
+        }
+
+        private void CreateAttractor()
+        {
+            PopulateMatrixBuffer();
             
+            chaosCompute.SetBuffer(1,"_AttractorMatrices",matrixBuffer);
+            
+            chaosCompute.Dispatch(0,numGroups,1,1);
+            
+            chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
+            chaosCompute.SetBuffer(2,"_AttractorPoints",attractorPositionsBuffer);
+
+            for (int i = 0; i < 8; i++)
+            {
+                chaosCompute.Dispatch(1,numGroups,1,1);
+            }
+            
+            chaosCompute.Dispatch(2,numGroups,1,1);
+            rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
         }
 
 
@@ -124,7 +124,7 @@ namespace ChaosGame.Scripts
             );
                 
             matrixArray[2] = Matrix4x4.TRS(
-                new Vector3(0f, 0.5f, 0),
+                new Vector3(0f, 0.36f, 0),
                 Quaternion.identity,
                 new Vector3(0.5f, 0.5f, 1)
             );
