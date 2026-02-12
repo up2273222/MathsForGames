@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using UnityEngine;
 
 
@@ -25,7 +26,33 @@ public static class MathCore
     {
         return MathCore.VectorLen(SubtractVector(start, end));
     }
+
+    public static Vector2 ScaleVector(Vector2 a, float scale)
+    {
+        return new Vector2(a.x * scale, a.y * scale);
+    }
+
+    public static Vector2 NormaliseVector(Vector2 a)
+    {
+        float len = MathCore.VectorLen(a);
+        if (len == 0) { return new Vector2(0, 0); }
+        return new Vector2(a.x / len, a.y / len);
+    }
+
+    public static float Dot(Vector2 a, Vector2 b)
+    {
+        return (a.x * b.x) + (a.y * b.y);
+    }
+
     
+    public static Vector2 MoveStep(Vector2 direction, float speed, float deltaTime)
+    {
+        direction = MathCore.NormaliseVector(direction);
+        Vector2 velocity = MathCore.ScaleVector(direction, speed);
+        return MathCore.ScaleVector(velocity, deltaTime);
+    }
+    
+
     //Vector 3----------------------------------------------------
 
     public static Vector3 AddVector(Vector3 a, Vector3 b)
@@ -47,7 +74,31 @@ public static class MathCore
     {
         return MathCore.VectorLen(SubtractVector(start, end));
     }
-    
+
+    public static Vector3 ScaleVector(Vector3 a, float scale)
+    {
+        return new Vector3(a.x * scale, a.y * scale, a.z * scale);
+    }
+
+    public static Vector3 NormaliseVector(Vector3 a)
+    {
+        float len = MathCore.VectorLen(a);
+        if (len == 0) { return new Vector3(0, 0, 0); }
+        return new Vector3(a.x / len, a.y / len, a.z /len);
+    }
+
+    public static float Dot(Vector3 a, Vector3 b)
+    {
+        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+    }
+
+    public static Vector3 MoveStep(Vector3 direction, float speed, float deltaTime)
+    {
+        direction = MathCore.NormaliseVector(direction);
+        Vector3 velocity = MathCore.ScaleVector(direction,speed);
+        return MathCore.ScaleVector(velocity,deltaTime);
+    }
+
     //Standard math operations-------------------------------------
 
     public static float MFGAbs(float a)
