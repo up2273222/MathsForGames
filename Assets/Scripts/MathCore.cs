@@ -3,8 +3,12 @@ using System.Collections.Specialized;
 using UnityEngine;
 
 
+
+
+
 public static class MathCore
 {
+    private const float MATHCORE_PI = 3.14159265359f;
     //Vector 2----------------------------------------------------
 
     public static Vector2 AddVector(Vector2 a, Vector2 b)
@@ -50,6 +54,19 @@ public static class MathCore
         direction = MathCore.NormaliseVector(direction);
         Vector2 velocity = MathCore.ScaleVector(direction, speed);
         return MathCore.ScaleVector(velocity, deltaTime);
+    }
+
+
+    /// Returns radians
+    public static float AngleFromVector2(Vector2 a)
+    {
+        
+        return Mathf.Atan2(a.y, a.x);
+    }
+
+    public static Vector2 Vector2FromAngle(float rad)
+    {
+        return new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
     }
     
 
@@ -99,6 +116,22 @@ public static class MathCore
         return MathCore.ScaleVector(velocity,deltaTime);
     }
 
+    public static Vector3 ForwardFromYawPitch(float yawRad, float pitchRad)
+    {
+        return new Vector3(
+            (float)(Math.Sin(yawRad) * Math.Cos(pitchRad)),
+            (float)Math.Sin(pitchRad),
+            (float)(Math.Cos(yawRad) * Math.Cos(pitchRad)));
+    }
+
+    public static Vector3 Cross(Vector3 a, Vector3 b)
+    {
+        return new Vector3(
+            (a.y * b.z - a.z * b.y),
+            (a.z * b.x - a.x * b.z),
+            (a.x * b.y - a.y * b.x));
+    }
+
     //Standard math operations-------------------------------------
 
     public static float MFGAbs(float a)
@@ -111,6 +144,16 @@ public static class MathCore
     {
         if (a > 0) return a;
         return a * -1;
+    }
+
+    public static float DegToRad(float deg)
+    {
+        return deg * (MATHCORE_PI / 180f);
+    }
+
+    public static float RadToDeg(float rad)
+    {
+        return rad * (180 / MATHCORE_PI);
     }
 
     
