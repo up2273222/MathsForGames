@@ -95,13 +95,13 @@ namespace ChaosGame.Scripts
             chaosCompute.Dispatch(0,numGroups,1,1);
             
             chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
-            chaosCompute.SetBuffer(2,"_AttractorPoints",attractorPositionsBuffer);
+            
 
             for (int i = 0; i < 8; i++)
             {
                 chaosCompute.Dispatch(1,numGroups,1,1);
             }
-            
+            chaosCompute.SetBuffer(2, "_AttractorPoints", attractorPositionsBuffer);
             chaosCompute.Dispatch(2,numGroups,1,1);
             rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
         }

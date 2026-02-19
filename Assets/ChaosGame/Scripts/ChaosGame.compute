@@ -37,13 +37,9 @@ float hash(uint n) {
 [numthreads(256,1,1)]
 void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
-    uint gridWidth = 1024;
-    float x = (id.x % gridWidth) / (float)gridWidth;
-    float y = (id.x / gridWidth) / (float)gridWidth;
-
-    float3 pos = float3(x,y,0);
+    float3 pos = float3(id.x, 0, 0);
  
- WriteVertex(id.x, pos);
+    WriteVertex(id.x, pos);
 
 }
 
