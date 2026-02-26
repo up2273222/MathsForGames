@@ -53,8 +53,9 @@ public class ShipController : MonoBehaviour
         float pitchRad = MathCore.DegToRad(pitchDeg);
 
 
-        Vector3 up = Vector3.up;
+        Vector3 up = transform.up;
         Vector3 fwd = MathCore.ForwardFromYawPitch(yawRad, pitchRad);
+        fwd = MathCore.NormaliseVector(fwd);
         Vector3 right = MathCore.Cross(up, fwd);
 
 
@@ -63,7 +64,7 @@ public class ShipController : MonoBehaviour
        
         
 
-        gameObject.transform.position += MathCore.MoveStep(fwd, moveSpeed, Time.deltaTime);
+        gameObject.transform.position += MathCore.MoveStep(moveDir, moveSpeed, Time.deltaTime);
         transform.rotation = Quaternion.Euler(pitchDeg, yawDeg, 0f);
     }
 
