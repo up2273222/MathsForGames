@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Specialized;
 using UnityEngine;
-
-
-
+using UnityEngine.PlayerLoop;
 
 
 public static class MathCore
@@ -130,6 +128,18 @@ public static class MathCore
             (a.y * b.z - a.z * b.y),
             (a.z * b.x - a.x * b.z),
             (a.x * b.y - a.y * b.x));
+    }
+
+    public static Vector3 DirectionFromBasis(Vector3 localDir, Vector3 up, Vector3 forward, Vector3 right)
+    {
+        return MathCore.AddVector(
+            MathCore.AddVector(MathCore.ScaleVector(right, localDir.x), MathCore.ScaleVector(up, localDir.y)),
+            MathCore.ScaleVector(forward, localDir.z));
+    }
+
+    public static Vector3 LocalPointToWorld(Vector3 p, Vector3 localPoint, Vector3 up, Vector3 forward, Vector3 right)
+    {
+        return MathCore.AddVector(DirectionFromBasis(localPoint, up, forward, right), p);
     }
 
     //Standard math operations-------------------------------------
