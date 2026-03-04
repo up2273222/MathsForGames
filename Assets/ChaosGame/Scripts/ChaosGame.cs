@@ -4,22 +4,26 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 
+
+
 namespace ChaosGame.Scripts
 {
     public class ChaosGame : MonoBehaviour
     {
-        //[SerializeField] private uint chaosGameCount;
-        [SerializeField] private int chaosGameIterations;
+        [SerializeField] private int _particleCount;
+        
+        [SerializeReference] private FractalType _fractalType1;
+        [SerializeReference] private FractalType _fractalType2;
+        
 
         public ComputeShader chaosCompute;
-        private ComputeBuffer attractorPositionsBuffer;
-
-        private Matrix4x4[] matrixArray;
-        private ComputeBuffer matrixBuffer;
         
-        public Vector3[] positions;
-       
-
+        private ComputeBuffer PositionsBuffer1;
+        private ComputeBuffer MatrixBuffer1;
+        
+        private ComputeBuffer PositionsBuffer2;
+        private ComputeBuffer MatrixBuffer2;
+        
         private Mesh _vertexMesh;
         public Material _vertexMaterial;
 
@@ -29,108 +33,78 @@ namespace ChaosGame.Scripts
         
         private RenderParams rparams;
 
-        public Mesh testmesh;
-        
-
-        private void Awake()
-        {
-       
-          
-           
-            
-        }
+    
 
         private void OnEnable()
         {
             bounds = new Bounds(Vector3.zero, Vector3.one * 100000);
-            numGroups = Mathf.CeilToInt((float)chaosGameIterations / 256);
+            numGroups = Mathf.CeilToInt((float)_particleCount / 256);
             
             rparams = new RenderParams(_vertexMaterial);
             rparams.matProps = new MaterialPropertyBlock();
             rparams.worldBounds = bounds;
             
-            attractorPositionsBuffer = new ComputeBuffer(chaosGameIterations, (sizeof(float) * 3));
-            chaosCompute.SetBuffer (0,"_AttractorPoints", attractorPositionsBuffer);
-            chaosCompute.SetInt("iterationCount", chaosGameIterations);
+            PositionsBuffer1 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
+            PositionsBuffer2 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
             
-            
-            
-           
-            
-
-
-
-
-
-
+            chaosCompute.SetBuffer (0,"_AttractorPoints", PositionsBuffer1);
+            chaosCompute.SetInt("particleCount", _particleCount);
+            chaosCompute.SetInt("affineTransformationCount", _fractalType1.GetAffineMatrixCount());
 
         }
 
         private void OnDisable()
         {
-            attractorPositionsBuffer.Release();
-            attractorPositionsBuffer = null;
+            PositionsBuffer1.Release();
+            PositionsBuffer1 = null;
             
-            matrixBuffer.Release();
-            matrixBuffer = null;
+            MatrixBuffer1.Release();
+            MatrixBuffer1 = null;
+            
+            PositionsBuffer2.Release();
+            PositionsBuffer2 = null;
+            
+            MatrixBuffer2.Release();
+            MatrixBuffer2 = null;
         }
 
         private void Start()
         {
+            PopulateMatrixBuffer(ref MatrixBuffer1,_fractalType1);
+            PopulateMatrixBuffer(ref MatrixBuffer2,_fractalType2);
             CreateAttractor();
-
         }
 
         private void Update()
         {
-                Graphics.RenderPrimitives(rparams, MeshTopology.Points, chaosGameIterations,1);
+                Graphics.RenderPrimitives(rparams, MeshTopology.Points, _particleCount,1);
         }
 
         private void CreateAttractor()
         {
-            PopulateMatrixBuffer();
-            
-            chaosCompute.SetBuffer(1,"_AttractorMatrices",matrixBuffer);
+            chaosCompute.SetBuffer(1,"_AttractorMatrices",MatrixBuffer1);
             
             chaosCompute.Dispatch(0,numGroups,1,1);
             
-            chaosCompute.SetBuffer(1,"_AttractorPoints",attractorPositionsBuffer);
+            chaosCompute.SetBuffer(1,"_AttractorPoints",PositionsBuffer1);
             
-
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i <12; i++)
             {
                 chaosCompute.Dispatch(1,numGroups,1,1);
             }
-            chaosCompute.SetBuffer(2, "_AttractorPoints", attractorPositionsBuffer);
+            chaosCompute.SetBuffer(2, "_AttractorPoints", PositionsBuffer1);
             chaosCompute.Dispatch(2,numGroups,1,1);
-            rparams.matProps.SetBuffer("AttractorPointsBufferShader", attractorPositionsBuffer);
+            rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer1);
         }
 
 
-        private void PopulateMatrixBuffer()
+        private void PopulateMatrixBuffer(ref ComputeBuffer buffer, FractalType fractalType)
         {
-            matrixArray = new Matrix4x4[3];
+            int matrixCount = fractalType.GetAffineMatrixCount();
+            Matrix4x4[] matrixArray = fractalType.GetAffineMatrices();
             
-            matrixArray[0] = Matrix4x4.TRS(
-                new Vector3(-0.5f, -0.5f, 0),
-                Quaternion.identity,
-                new Vector3(0.5f, 0.5f, 1)
-            );
-                                           
-            matrixArray[1] = Matrix4x4.TRS(
-                new Vector3(0.5f, -0.5f, 0),
-                Quaternion.identity,
-                new Vector3(0.5f, 0.5f, 1)
-            );
-                
-            matrixArray[2] = Matrix4x4.TRS(
-                new Vector3(0f, 0.36f, 0),
-                Quaternion.identity,
-                new Vector3(0.5f, 0.5f, 1)
-            );
-
-            matrixBuffer = new ComputeBuffer(3, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Matrix4x4)));
-            matrixBuffer.SetData(matrixArray);
+            buffer = new ComputeBuffer(matrixCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Matrix4x4)));
+            buffer.SetData(matrixArray);
         }
     }
 }

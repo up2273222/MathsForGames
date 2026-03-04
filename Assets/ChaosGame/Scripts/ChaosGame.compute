@@ -2,27 +2,15 @@
 #pragma kernel IterateAttractorPoints
 #pragma kernel ScalePoints
 
-//RWStructuredBuffer<float4> _AttractorPoints;
 
-RWByteAddressBuffer _AttractorPoints;
-
+RWStructuredBuffer<float3> _AttractorPoints;
 RWStructuredBuffer<float4x4> _AttractorMatrices;
 
 
-uint iterationCount;
+uint particleCount;
+int affineTransformationCount;
 
 
-
-void WriteVertex(uint offset, float3 v) {
-    uint addr = offset * 12;
-    _AttractorPoints.Store3(addr, asuint(v));
-}
-
-float3 ReadVertex(uint offset) {
-    uint addr = offset * 12;
-
-    return asfloat(_AttractorPoints.Load3(addr));
-}
 
 
 
@@ -39,35 +27,34 @@ void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
     float3 pos = float3(id.x, 0, 0);
  
-    WriteVertex(id.x, pos);
-
+    _AttractorPoints[id.x] = pos;
 }
 
 
 [numthreads(256,1,1)]
 void IterateAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
-   if (id.x >= iterationCount) {return;}
-    float3 pos = ReadVertex(id.x);
+   if (id.x >= particleCount) {return;}
+    float3 pos = _AttractorPoints[id.x];
     
     uint seed = id.x;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 100; i++)
     {
         seed += i * 1926783;
         float r = hash(seed);
     
-        uint index = (uint)(r * 3.0);
+        uint index = (uint)(r * affineTransformationCount);
         pos = mul(_AttractorMatrices[index],float4(pos,1)).xyz;
     }
-    WriteVertex(id.x, pos);
+    _AttractorPoints[id.x] = pos;
 }
 
 [numthreads(256,1,1)]
 void ScalePoints(uint3 id : SV_DispatchThreadID)
 {
-float3 pos = ReadVertex(id.x);
+float3 pos = _AttractorPoints[id.x];
 
-pos *= 64;
+pos *= 1;
 
-WriteVertex(id.x, pos);
+    _AttractorPoints[id.x] = pos;
 }
