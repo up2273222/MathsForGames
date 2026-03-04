@@ -47,9 +47,13 @@ namespace ChaosGame.Scripts
             PositionsBuffer1 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
             PositionsBuffer2 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
             
-            chaosCompute.SetBuffer (0,"_AttractorPoints", PositionsBuffer1);
+            chaosCompute.SetBuffer (0,"_AttractorPoints1", PositionsBuffer1);
+            chaosCompute.SetBuffer (0,"_AttractorPoints2", PositionsBuffer2);
             chaosCompute.SetInt("particleCount", _particleCount);
-            chaosCompute.SetInt("affineTransformationCount", _fractalType1.GetAffineMatrixCount());
+            chaosCompute.SetBuffer(1,"_AttractorPoints1",PositionsBuffer1);
+            chaosCompute.SetBuffer(2,"_AttractorPoints2",PositionsBuffer2);
+            
+            
 
         }
 
@@ -72,29 +76,54 @@ namespace ChaosGame.Scripts
         {
             PopulateMatrixBuffer(ref MatrixBuffer1,_fractalType1);
             PopulateMatrixBuffer(ref MatrixBuffer2,_fractalType2);
-            CreateAttractor();
+            
+            chaosCompute.Dispatch(0, numGroups, 1, 1);
+            
+            CreateAttractor1();
+            CreateAttractor2();
+
+            
+
         }
 
         private void Update()
         {
-                Graphics.RenderPrimitives(rparams, MeshTopology.Points, _particleCount,1);
+            Graphics.RenderPrimitives(rparams, MeshTopology.Points, _particleCount, 1);
+
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                      rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer1);
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                {
+                    rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer2);
+                }
         }
 
-        private void CreateAttractor()
+        private void CreateAttractor1()
         {
+            chaosCompute.SetInt("affineTransformationCount", _fractalType1.GetAffineMatrixCount());
             chaosCompute.SetBuffer(1,"_AttractorMatrices",MatrixBuffer1);
-            
-            chaosCompute.Dispatch(0,numGroups,1,1);
-            
-            chaosCompute.SetBuffer(1,"_AttractorPoints",PositionsBuffer1);
             
             for (int i = 0; i <12; i++)
             {
                 chaosCompute.Dispatch(1,numGroups,1,1);
             }
-            chaosCompute.SetBuffer(2, "_AttractorPoints", PositionsBuffer1);
-            chaosCompute.Dispatch(2,numGroups,1,1);
             rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer1);
+          
+          
+        }
+
+        private void CreateAttractor2()
+        {
+            chaosCompute.SetInt("affineTransformationCount", _fractalType2.GetAffineMatrixCount());
+            chaosCompute.SetBuffer(2,"_AttractorMatrices",MatrixBuffer2);
+            chaosCompute.SetBuffer(2,"_AttractorPoints2",PositionsBuffer2);
+            for (int i = 0; i <12; i++)
+            {
+                chaosCompute.Dispatch(2,numGroups,1,1);
+            }
+          
         }
 
 
