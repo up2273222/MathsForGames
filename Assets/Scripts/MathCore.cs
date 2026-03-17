@@ -141,6 +141,24 @@ public static class MathCore
     {
         return MathCore.AddVector(DirectionFromBasis(localPoint, up, forward, right), p);
     }
+    
+    
+    //Vector 4
+    public static float Dot(Vector4 a, Vector4 b)
+    {
+        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
+    }
+    
+    //Matrix 4x4
+
+    public static void BasisFromForward(Vector3 forwardIn, out Vector3 up, out Vector3 forward, out Vector3 right)
+    {
+        forward = MathCore.NormaliseVector(forwardIn);
+        up = new Vector3(0, 1, 0);
+        right = MathCore.NormaliseVector(MathCore.Cross(up, forward));
+        up = MathCore.Cross(forward, right);
+    }
+    
 
     //Standard math operations-------------------------------------
 

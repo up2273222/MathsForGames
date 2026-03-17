@@ -1,7 +1,9 @@
 #pragma kernel InitialiseAttractorPoints
 #pragma kernel IterateAttractor1Points
 #pragma kernel IterateAttractor2Points
-#pragma kernel ScalePoints
+//#pragma kernel ScalePoints
+
+#include "MathCore.cginc"
 
 
 RWStructuredBuffer<float3> _AttractorPoints1;
@@ -23,6 +25,8 @@ float hash(uint n) {
    n = n * (n * n * 15731U + 0x789221U) + 0x1376312589U;
    return float(n & uint(0x7fffffffU)) / float(0x7fffffff);
 }
+
+
 
 [numthreads(256,1,1)]
 void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
@@ -47,7 +51,7 @@ void IterateAttractor1Points(uint3 id : SV_DispatchThreadID)
         float r = hash(seed);
     
         uint index = (uint)(r * affineTransformationCount);
-        pos = mul(_AttractorMatrices[index],float4(pos,1)).xyz;
+        pos = MathCoreMul(_AttractorMatrices[index],float4(pos,1)).xyz;
     }
     _AttractorPoints1[id.x] = pos;
 }
@@ -65,7 +69,7 @@ void IterateAttractor2Points(uint3 id : SV_DispatchThreadID)
         float r = hash(seed);
     
         uint index = (uint)(r * affineTransformationCount);
-        pos = mul(_AttractorMatrices[index],float4(pos,1)).xyz;
+        pos = MathCoreMul(_AttractorMatrices[index],float4(pos,1)).xyz;
     }
     _AttractorPoints2[id.x] = pos;
 }
