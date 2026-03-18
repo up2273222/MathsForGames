@@ -10,7 +10,7 @@ public abstract class FractalType : ScriptableObject
         return affineMatrixCount;
     }
     
-    public abstract Matrix4x4[] GetAffineMatrices();
+    public abstract Matrix4[] GetAffineMatrices();
 }
 
 

@@ -8,7 +8,7 @@
 
 RWStructuredBuffer<float3> _AttractorPoints1;
 RWStructuredBuffer<float3> _AttractorPoints2;
-RWStructuredBuffer<float4x4> _AttractorMatrices;
+RWStructuredBuffer<MathCoreM4x4> _AttractorMatrices;
 
 
 uint particleCount;

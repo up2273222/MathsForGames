@@ -75,6 +75,12 @@ namespace ChaosGame.Scripts
         private void Start()
         {
             PopulateMatrixBuffer(ref MatrixBuffer1,_fractalType1);
+            
+           
+            
+            
+            
+            
             PopulateMatrixBuffer(ref MatrixBuffer2,_fractalType2);
             
             chaosCompute.Dispatch(0, numGroups, 1, 1);
@@ -130,9 +136,9 @@ namespace ChaosGame.Scripts
         private void PopulateMatrixBuffer(ref ComputeBuffer buffer, FractalType fractalType)
         {
             int matrixCount = fractalType.GetAffineMatrixCount();
-            Matrix4x4[] matrixArray = fractalType.GetAffineMatrices();
+            Matrix4[] matrixArray = fractalType.GetAffineMatrices();
             
-            buffer = new ComputeBuffer(matrixCount, System.Runtime.InteropServices.Marshal.SizeOf(typeof(Matrix4x4)));
+            buffer = new ComputeBuffer(matrixCount, 64);
             buffer.SetData(matrixArray);
         }
     }

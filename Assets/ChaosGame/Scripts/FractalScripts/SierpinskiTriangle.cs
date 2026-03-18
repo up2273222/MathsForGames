@@ -9,27 +9,31 @@ public class SierpinskiTriangle : FractalType
         affineMatrixCount = 3;
     }
 
-    public override Matrix4x4[] GetAffineMatrices()
+
+    public override Matrix4[] GetAffineMatrices()
     {
-        Matrix4x4[] affineMatrices = new Matrix4x4[affineMatrixCount];
+        Matrix4[] affineMatrices = new Matrix4[affineMatrixCount];
         
-        affineMatrices[0] = Matrix4x4.TRS(
-            new Vector3(-0.5f, -0.5f, 0),
-            Quaternion.identity,
-            new Vector3(0.5f, 0.5f, 1)
-        );
-                                           
-        affineMatrices[1] = Matrix4x4.TRS(
-            new Vector3(0.5f, -0.5f, 0),
-            Quaternion.identity,
-            new Vector3(0.5f, 0.5f, 1)
-        );
-                
-        affineMatrices[2] = Matrix4x4.TRS(
-            new Vector3(0f, 0.36f, 0),
-            Quaternion.identity,
-            new Vector3(0.5f, 0.5f, 1)
-        );
+        affineMatrices[0] = new Matrix4(
+            new Vector4(0.5f,0,0,0),
+            new Vector4(0, 0.5f,0,0), 
+            new Vector4(0,0,0,0),
+            new Vector4(0,0.36f,0,1));
+        
+        affineMatrices[1] = new Matrix4(
+            new Vector4(0.5f,0,0,0),
+            new Vector4(0, 0.5f,0,0), 
+            new Vector4(0,0,0,0),
+            new Vector4(-0.5f,-0.5f,0,1));
+            
+        affineMatrices[2] = new Matrix4(
+            new Vector4(0.5f,0,0,0),
+            new Vector4(0, 0.5f,0,0), 
+            new Vector4(0,0,0,0),
+            new Vector4(0.5f,-0.5f,0,1));
+        
+        
+        
         return affineMatrices;
     }
     
