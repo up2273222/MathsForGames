@@ -338,8 +338,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChaosGame.Scripts.ChaosGame
   _particleCount: 100000
-  _fractalType1: {fileID: 11400000, guid: 2866d81f777011f469a3b2c95b224731, type: 2}
-  _fractalType2: {fileID: 11400000, guid: 2866d81f777011f469a3b2c95b224731, type: 2}
+  _fractalType1: {fileID: 11400000, guid: a61cac106a7f2ec408d689cc09517195, type: 2}
+  _fractalType2: {fileID: 11400000, guid: 8cf65ac65dd1149459888ab5be14528f, type: 2}
   chaosCompute: {fileID: 7200000, guid: 23075db47cb9f674faffb702ade02af6, type: 3}
   _vertexMaterial: {fileID: 2100000, guid: 1f014095e8514a3498c445d98c8b75e7, type: 2}
 --- !u!4 &1449598352
