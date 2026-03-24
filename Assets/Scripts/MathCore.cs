@@ -141,6 +141,13 @@ public static class MathCore
     {
         return MathCore.AddVector(DirectionFromBasis(localPoint, up, forward, right), p);
     }
+
+    public static Vector3 TransformPoint(Matrix4 m, Vector3 p)
+    {
+        Vector4 v = new Vector4(p.x, p.y, p.z, 1);
+        Vector4 outV = MathCore.Mul(m, v);
+        return new Vector3(outV.x, outV.y, outV.z);
+    }
     
     
     //Vector 4
@@ -157,6 +164,18 @@ public static class MathCore
         up = new Vector3(0, 1, 0);
         right = MathCore.NormaliseVector(MathCore.Cross(up, forward));
         up = MathCore.Cross(forward, right);
+    }
+
+    public static Vector4 Mul(Matrix4 m, Vector4 v)
+    {
+        Vector4 outV = new Vector4
+        {
+            x = MathCore.Dot(m.row0, v),
+            y = MathCore.Dot(m.row1, v),
+            z = MathCore.Dot(m.row2, v),
+            w = MathCore.Dot(m.row3, v)
+        };
+        return outV;
     }
     
 
