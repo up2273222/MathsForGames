@@ -177,6 +177,80 @@ public static class MathCore
         };
         return outV;
     }
+
+    public static Matrix4 Mul(Matrix4 m1, Matrix4 m2)
+    {
+        Vector4 m2col1 = new Vector4(m2.row0.x, m2.row1.x, m2.row2.x, m2.row3.x);
+        Vector4 m2col2 = new Vector4(m2.row0.y, m2.row1.y, m2.row2.y, m2.row3.y);
+        Vector4 m2col3 = new Vector4(m2.row0.z, m2.row1.z, m2.row2.z, m2.row3.z);
+        Vector4 m2col4 = new Vector4(m2.row0.w, m2.row1.w, m2.row2.w,    m2.row3.w);
+
+        Vector4 outCol1 = new Vector4(
+               MathCore.Dot(m1.row0, m2col1),
+               MathCore.Dot(m1.row1, m2col1),
+               MathCore.Dot(m1.row2, m2col1), 
+            MathCore.Dot(m1.row3, m2col1));
+        
+        Vector4 outCol2 = new Vector4(
+               MathCore.Dot(m1.row0, m2col2),
+               MathCore.Dot(m1.row1, m2col2),
+               MathCore.Dot(m1.row2, m2col2), 
+            MathCore.Dot(m1.row3, m2col2));
+            
+        Vector4 outCol3 = new Vector4(
+               MathCore.Dot(m1.row0, m2col3), 
+               MathCore.Dot(m1.row1, m2col3),
+               MathCore.Dot(m1.row2, m2col3), 
+            MathCore.Dot(m1.row3, m2col3));
+            
+        Vector4 outCol4 = new Vector4(
+               MathCore.Dot(m1.row0, m2col4), 
+               MathCore.Dot(m1.row1, m2col4),
+               MathCore.Dot(m1.row2, m2col4), 
+            MathCore.Dot(m1.row3, m2col4));
+            
+        return new Matrix4(outCol1, outCol2, outCol3, outCol4);
+    }
+
+
+    /// Input in degrees
+    public static Matrix4 CreateZRotMatrix(float angle)
+    {
+        angle = MathCore.DegToRad(angle);    
+        
+        return new Matrix4(
+            new Vector4(Mathf.Cos(angle),-Mathf.Sin(angle),0,0),
+            new Vector4(Mathf.Sin(angle),Mathf.Cos(angle),0,0),
+            new Vector4(0,0,1,0),
+            new Vector4(0, 0, 0, 1));
+    }
+
+    public static Matrix4 CreateTranslationMatrix(float x, float y, float z)
+    {
+        return new Matrix4(
+            new Vector4(1,0,0,0),
+            new Vector4(0,1,0,0),
+            new Vector4(0,0,1,0),
+            new Vector4(x,y,z,1));
+    }
+
+    public static Matrix4 CreateScaleMatrix(float xscale, float yscale, float zscale)
+    {
+        return new Matrix4(
+            new Vector4(xscale,0,0,0),
+            new Vector4(0,yscale,0,0),
+            new Vector4(0,0,zscale,0),
+            new Vector4(0,0,0,1));
+    }
+
+    public static Matrix4 CreateAffineTransformMatrix(float xoffset, float yoffset, float xscale, float yscale,float rotDegrees)
+    {
+        Matrix4 T = MathCore.CreateTranslationMatrix(xoffset, yoffset, 0);
+        Matrix4 R = MathCore.CreateZRotMatrix(rotDegrees);
+        Matrix4 S = MathCore.CreateScaleMatrix(xscale, yscale, 0);
+
+        return MathCore.Mul(MathCore.Mul(T, R), S);
+    }
     
 
     //Standard math operations-------------------------------------

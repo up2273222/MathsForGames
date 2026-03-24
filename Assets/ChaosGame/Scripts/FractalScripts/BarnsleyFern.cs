@@ -37,7 +37,6 @@ public class BarnsleyFern : FractalType
             new Vector4(0.28f, 0.24f, 0f, 0f),
             new Vector4(0f, 0f, 1f, 0f),
             new Vector4(0f, 0.44f, 0f, 1f));
-
         
         return affineMatrices;
     }

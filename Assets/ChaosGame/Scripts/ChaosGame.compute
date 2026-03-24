@@ -1,13 +1,13 @@
 #pragma kernel InitialiseAttractorPoints
-#pragma kernel IterateAttractor1Points
-#pragma kernel IterateAttractor2Points
+#pragma kernel IterateCurrentPoints
+#pragma kernel IterateTargetPoints
 //#pragma kernel ScalePoints
 
 #include "MathCore.cginc"
 
 
-RWStructuredBuffer<float3> _AttractorPoints1;
-RWStructuredBuffer<float3> _AttractorPoints2;
+RWStructuredBuffer<float3> _CurrentPoints;
+RWStructuredBuffer<float3> _TargetPoints;
 RWStructuredBuffer<MathCoreM4x4> _AttractorMatrices;
 
 
@@ -33,16 +33,16 @@ void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
     float3 pos = float3(id.x, 0, 0);
  
-    _AttractorPoints1[id.x] = pos;
-    _AttractorPoints2[id.x] = pos;
+    _CurrentPoints[id.x] = pos;
+    _TargetPoints[id.x] = pos;
 }
 
 
 [numthreads(256,1,1)]
-void IterateAttractor1Points(uint3 id : SV_DispatchThreadID)
+void IterateCurrentPoints(uint3 id : SV_DispatchThreadID)
 {
    if (id.x >= particleCount) {return;}
-    float3 pos = _AttractorPoints1[id.x];
+    float3 pos = _CurrentPoints[id.x];
     
     uint seed = id.x;
     for (int i = 0; i < 100; i++)
@@ -53,14 +53,14 @@ void IterateAttractor1Points(uint3 id : SV_DispatchThreadID)
         uint index = (uint)(r * affineTransformationCount);
         pos = MathCoreMul(_AttractorMatrices[index],float4(pos,1)).xyz;
     }
-    _AttractorPoints1[id.x] = pos;
+    _CurrentPoints[id.x] = pos;
 }
 
 [numthreads(256,1,1)]
-void IterateAttractor2Points(uint3 id : SV_DispatchThreadID)
+void IterateTargetPoints(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= particleCount) {return;}
-    float3 pos = _AttractorPoints2[id.x];
+    float3 pos = _TargetPoints[id.x];
     
     uint seed = id.x;
     for (int i = 0; i < 100; i++)
@@ -71,7 +71,7 @@ void IterateAttractor2Points(uint3 id : SV_DispatchThreadID)
         uint index = (uint)(r * affineTransformationCount);
         pos = MathCoreMul(_AttractorMatrices[index],float4(pos,1)).xyz;
     }
-    _AttractorPoints2[id.x] = pos;
+    _TargetPoints[id.x] = pos;
 }
 
 

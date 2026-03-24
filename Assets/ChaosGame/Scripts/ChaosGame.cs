@@ -18,10 +18,10 @@ namespace ChaosGame.Scripts
 
         public ComputeShader chaosCompute;
         
-        private ComputeBuffer PositionsBuffer1;
+        private ComputeBuffer CurrentPositionsBuffer;
         private ComputeBuffer MatrixBuffer1;
         
-        private ComputeBuffer PositionsBuffer2;
+        private ComputeBuffer TargetPositionsBuffer;
         private ComputeBuffer MatrixBuffer2;
         
         private Mesh _vertexMesh;
@@ -44,14 +44,14 @@ namespace ChaosGame.Scripts
             rparams.matProps = new MaterialPropertyBlock();
             rparams.worldBounds = bounds;
             
-            PositionsBuffer1 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
-            PositionsBuffer2 = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
+            CurrentPositionsBuffer = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
+            TargetPositionsBuffer = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
             
-            chaosCompute.SetBuffer (0,"_AttractorPoints1", PositionsBuffer1);
-            chaosCompute.SetBuffer (0,"_AttractorPoints2", PositionsBuffer2);
+            chaosCompute.SetBuffer (0,"_CurrentPoints", CurrentPositionsBuffer);
+            chaosCompute.SetBuffer (0,"_TargetPoints", TargetPositionsBuffer);
             chaosCompute.SetInt("particleCount", _particleCount);
-            chaosCompute.SetBuffer(1,"_AttractorPoints1",PositionsBuffer1);
-            chaosCompute.SetBuffer(2,"_AttractorPoints2",PositionsBuffer2);
+            chaosCompute.SetBuffer(1,"_CurrentPoints",CurrentPositionsBuffer);
+            chaosCompute.SetBuffer(2,"_TargetPoints",TargetPositionsBuffer);
             
             
 
@@ -59,14 +59,14 @@ namespace ChaosGame.Scripts
 
         private void OnDisable()
         {
-            PositionsBuffer1.Release();
-            PositionsBuffer1 = null;
+            CurrentPositionsBuffer.Release();
+            CurrentPositionsBuffer = null;
             
             MatrixBuffer1.Release();
             MatrixBuffer1 = null;
             
-            PositionsBuffer2.Release();
-            PositionsBuffer2 = null;
+            TargetPositionsBuffer.Release();
+            TargetPositionsBuffer = null;
             
             MatrixBuffer2.Release();
             MatrixBuffer2 = null;
@@ -98,11 +98,11 @@ namespace ChaosGame.Scripts
 
                 if (Input.GetKeyDown(KeyCode.Alpha1))
                 {
-                      rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer1);
+                      rparams.matProps.SetBuffer("AttractorPointsBufferShader", CurrentPositionsBuffer);
                 }
                 else if (Input.GetKeyDown(KeyCode.Alpha2))
                 {
-                    rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer2);
+                    rparams.matProps.SetBuffer("AttractorPointsBufferShader", TargetPositionsBuffer);
                 }
         }
 
@@ -115,7 +115,7 @@ namespace ChaosGame.Scripts
             {
                 chaosCompute.Dispatch(1,numGroups,1,1);
             }
-            rparams.matProps.SetBuffer("AttractorPointsBufferShader", PositionsBuffer1);
+            rparams.matProps.SetBuffer("AttractorPointsBufferShader", CurrentPositionsBuffer);
           
           
         }
@@ -124,7 +124,7 @@ namespace ChaosGame.Scripts
         {
             chaosCompute.SetInt("affineTransformationCount", _fractalType2.GetAffineMatrixCount());
             chaosCompute.SetBuffer(2,"_AttractorMatrices",MatrixBuffer2);
-            chaosCompute.SetBuffer(2,"_AttractorPoints2",PositionsBuffer2);
+            chaosCompute.SetBuffer(2,"_TargetPoints",TargetPositionsBuffer);
             for (int i = 0; i <12; i++)
             {
                 chaosCompute.Dispatch(2,numGroups,1,1);
