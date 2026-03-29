@@ -13,16 +13,29 @@ namespace ChaosGame.Scripts
         [SerializeField] private int _particleCount;
         
         [SerializeReference] private FractalType _fractalType1;
-        [SerializeReference] private FractalType _fractalType2;
+
         
 
         public ComputeShader chaosCompute;
         
-        private ComputeBuffer CurrentPositionsBuffer;
-        private ComputeBuffer MatrixBuffer1;
+        struct FrustumPlane{
+            public Vector3 normal;
+            public float distance;
+        };
         
-        private ComputeBuffer TargetPositionsBuffer;
-        private ComputeBuffer MatrixBuffer2;
+        
+     
+
+        private GraphicsBuffer _argsBuffer;
+        private GraphicsBuffer.IndirectDrawIndexedArgs[] _argsData;
+
+        private GraphicsBuffer _visiblePointsBuffer;
+       // private GraphicsBuffer _targetPointsBuffer;
+        private GraphicsBuffer _currentPointsBuffer;
+        private GraphicsBuffer _frustumBuffer;
+        private GraphicsBuffer _matrixBuffer;
+
+        private FrustumPlane[] _frustumPlanes;
         
         private Mesh _vertexMesh;
         public Material _vertexMaterial;
@@ -32,114 +45,158 @@ namespace ChaosGame.Scripts
         private int numGroups;
         
         private RenderParams rparams;
+        [SerializeField] Camera _camera;
+
+        private const int CommandCount = 1;
 
     
 
         private void OnEnable()
         {
-            bounds = new Bounds(Vector3.zero, Vector3.one * 100000);
+            
             numGroups = Mathf.CeilToInt((float)_particleCount / 256);
             
-            rparams = new RenderParams(_vertexMaterial);
-            rparams.matProps = new MaterialPropertyBlock();
-            rparams.worldBounds = bounds;
-            
-            CurrentPositionsBuffer = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
-            TargetPositionsBuffer = new ComputeBuffer(_particleCount, (sizeof(float) * 3));
-            
-            chaosCompute.SetBuffer (0,"_CurrentPoints", CurrentPositionsBuffer);
-            chaosCompute.SetBuffer (0,"_TargetPoints", TargetPositionsBuffer);
-            chaosCompute.SetInt("particleCount", _particleCount);
-            chaosCompute.SetBuffer(1,"_CurrentPoints",CurrentPositionsBuffer);
-            chaosCompute.SetBuffer(2,"_TargetPoints",TargetPositionsBuffer);
-            
-            
-
         }
 
         private void OnDisable()
         {
-            CurrentPositionsBuffer.Release();
-            CurrentPositionsBuffer = null;
+            _visiblePointsBuffer.Release();
+            _currentPointsBuffer.Release();
+            _frustumBuffer.Release();
+            _argsBuffer.Release();
+            _matrixBuffer.Release();
             
-            MatrixBuffer1.Release();
-            MatrixBuffer1 = null;
-            
-            TargetPositionsBuffer.Release();
-            TargetPositionsBuffer = null;
-            
-            MatrixBuffer2.Release();
-            MatrixBuffer2 = null;
+            _visiblePointsBuffer = null;
+            _currentPointsBuffer = null;
+            _frustumBuffer = null;
+            _argsBuffer = null;
+            _matrixBuffer = null;
         }
 
         private void Start()
         {
-            PopulateMatrixBuffer(ref MatrixBuffer1,_fractalType1);
             
-           
-            
-            
-            
-            
-            PopulateMatrixBuffer(ref MatrixBuffer2,_fractalType2);
-            
-            chaosCompute.Dispatch(0, numGroups, 1, 1);
-            
-            CreateAttractor1();
-            CreateAttractor2();
-
-            
-
+            CreateBuffers();
         }
 
         private void Update()
         {
-            Graphics.RenderPrimitives(rparams, MeshTopology.Points, _particleCount, 1);
+            chaosCompute.SetFloat("currentFrame", Time.frameCount);
 
-                if (Input.GetKeyDown(KeyCode.Alpha1))
-                {
-                      rparams.matProps.SetBuffer("AttractorPointsBufferShader", CurrentPositionsBuffer);
-                }
-                else if (Input.GetKeyDown(KeyCode.Alpha2))
-                {
-                    rparams.matProps.SetBuffer("AttractorPointsBufferShader", TargetPositionsBuffer);
-                }
+
+          
+            
+            _frustumBuffer.SetData(CalculateFrustumPlanes());
+           // _frustumBuffer.SetData(GeometryUtility.CalculateFrustumPlanes(_camera));
+            
+            
+            
+            
+            
+            
+            chaosCompute.SetBuffer(2,"_FrustumPlanesBuffer", _frustumBuffer);
+            chaosCompute.SetBuffer(2,"_VisiblePoints", _visiblePointsBuffer);
+            chaosCompute.SetBuffer(2,"_ArgsBuffer", _argsBuffer);
+            chaosCompute.SetBuffer(3,"_ArgsBuffer", _argsBuffer);
+            
+            
+            
+            
+            
+            //Reset instances
+            chaosCompute.Dispatch(3,1,1,1);
+            //Cull
+            chaosCompute.Dispatch(2,numGroups,1,1);
+            
+            rparams.matProps.SetBuffer("AttractorPointsBufferShader", _visiblePointsBuffer);
+            
+            Graphics.RenderPrimitivesIndirect(rparams, MeshTopology.Points,_argsBuffer,CommandCount,0);
+           
         }
 
-        private void CreateAttractor1()
-        {
-            chaosCompute.SetInt("affineTransformationCount", _fractalType1.GetAffineMatrixCount());
-            chaosCompute.SetBuffer(1,"_AttractorMatrices",MatrixBuffer1);
+    
+        
             
-            for (int i = 0; i <12; i++)
+
+        private void CreateBuffers()
+        {
+            //Define strides
+            int maxInstanceCount = _particleCount;
+            int instanceStride = sizeof(float) * 3;
+            int frustumStride = sizeof(float) * 4;
+            
+            
+            //Create all points buffer + buffer - culled points + frustum buffer
+            _currentPointsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, maxInstanceCount, instanceStride);
+            _visiblePointsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, maxInstanceCount, instanceStride);
+            _frustumBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 6, frustumStride);
+
+
+            //Create args buffer + set data
+            _argsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, CommandCount,GraphicsBuffer.IndirectDrawIndexedArgs.size);
+            _argsData = new GraphicsBuffer.IndirectDrawIndexedArgs[CommandCount];
+
+            _argsData[0].indexCountPerInstance = 1;
+            _argsData[0].startIndex = 0;
+            _argsData[0].baseVertexIndex = 0;
+            
+            _argsBuffer.SetData(_argsData);
+            
+            //Create rparams
+            rparams = new RenderParams(_vertexMaterial)
+            {
+                matProps = new MaterialPropertyBlock(),
+                worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000)
+            };
+            
+            //Create affine matrices buffer
+            int matrixCount = _fractalType1.GetAffineMatrixCount();
+            Matrix4[] matrixArray = _fractalType1.GetAffineMatrices();
+
+            _matrixBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, matrixCount, sizeof(float) * 4 * 4);
+            _matrixBuffer.SetData(matrixArray);
+        
+        
+            //Initialise Points
+            chaosCompute.SetInt("particleCount", maxInstanceCount);
+            chaosCompute.SetBuffer(0,"_CurrentPoints", _currentPointsBuffer);
+            chaosCompute.Dispatch(0, numGroups, 1, 1);
+            
+            //Create the first attractor
+            chaosCompute.SetInt("affineTransformationCount", _fractalType1.GetAffineMatrixCount());
+            chaosCompute.SetBuffer(1,"_CurrentPoints",_currentPointsBuffer);
+            chaosCompute.SetBuffer(1,"_AttractorMatrices",_matrixBuffer);
+            
+            
+            for (int i = 0; i <20; i++)
             {
                 chaosCompute.Dispatch(1,numGroups,1,1);
             }
-            rparams.matProps.SetBuffer("AttractorPointsBufferShader", CurrentPositionsBuffer);
-          
-          
-        }
-
-        private void CreateAttractor2()
-        {
-            chaosCompute.SetInt("affineTransformationCount", _fractalType2.GetAffineMatrixCount());
-            chaosCompute.SetBuffer(2,"_AttractorMatrices",MatrixBuffer2);
-            chaosCompute.SetBuffer(2,"_TargetPoints",TargetPositionsBuffer);
-            for (int i = 0; i <12; i++)
-            {
-                chaosCompute.Dispatch(2,numGroups,1,1);
-            }
-          
-        }
-
-
-        private void PopulateMatrixBuffer(ref ComputeBuffer buffer, FractalType fractalType)
-        {
-            int matrixCount = fractalType.GetAffineMatrixCount();
-            Matrix4[] matrixArray = fractalType.GetAffineMatrices();
             
-            buffer = new ComputeBuffer(matrixCount, 64);
-            buffer.SetData(matrixArray);
+            //Set cull kernel to have all points
+            chaosCompute.SetBuffer(2,"_CurrentPoints", _currentPointsBuffer);
         }
+
+        private FrustumPlane[] CalculateFrustumPlanes()
+        {
+            FrustumPlane[] outPlanes = new FrustumPlane[6];
+        
+            float aspect = _camera.aspect;
+            float near = _camera.nearClipPlane;
+            float far = _camera.farClipPlane;
+            float fov = _camera.fieldOfView;
+            
+            float halfVSide = far * Mathf.Tan(fov / 2);
+            float halfHDide = halfVSide * aspect;
+            Vector3 frontMultFar = far * _camera.transform.forward;
+            
+            outPlanes[0].normal = _camera.transform.position + near * _camera.transform.forward;
+            
+          
+            return outPlanes;
+            
+            
+        }
+        
     }
 }

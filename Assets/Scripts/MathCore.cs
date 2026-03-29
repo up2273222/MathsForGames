@@ -148,6 +148,20 @@ public static class MathCore
         Vector4 outV = MathCore.Mul(m, v);
         return new Vector3(outV.x, outV.y, outV.z);
     }
+
+    public static Vector3 RotateAroundAxis(Vector3 v, Vector3 axis, float angle)
+    {
+        angle = MathCore.DegToRad(angle);
+        axis = MathCore.NormaliseVector(axis);
+        
+        Vector3 outV = MathCore.AddVector(MathCore.AddVector(
+        MathCore.ScaleVector(v,Mathf.Cos(angle))
+        ,MathCore.ScaleVector(MathCore.ScaleVector(axis,MathCore.Dot(v,axis)),1-Mathf.Cos(angle)))
+        ,MathCore.ScaleVector(MathCore.Cross(axis,v),Mathf.Sin(angle)));
+       return outV;
+        
+        
+    }
     
     
     //Vector 4

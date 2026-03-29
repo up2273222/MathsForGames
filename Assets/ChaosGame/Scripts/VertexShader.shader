@@ -33,10 +33,10 @@ Shader "Custom/VertexShader"
             
             StructuredBuffer<float3> AttractorPointsBufferShader;
 
-            v2f vert (uint VertexID : SV_VertexID)
+            v2f vert (uint instanceID : SV_INSTANCEID)
             {
                 v2f o;
-                float3 pos = AttractorPointsBufferShader[VertexID].xyz;
+                float3 pos = AttractorPointsBufferShader[instanceID].xyz;
                 
                 float4 worldPos = float4(pos.xyz,1.0f);
                 

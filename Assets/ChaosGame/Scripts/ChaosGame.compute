@@ -1,19 +1,31 @@
 #pragma kernel InitialiseAttractorPoints
 #pragma kernel IterateCurrentPoints
-#pragma kernel IterateTargetPoints
-//#pragma kernel ScalePoints
+#pragma kernel CullInvisibleInstances
+#pragma kernel resetInstanceCount
 
 #include "MathCore.cginc"
 
+struct FrustumPlane{
+    float3 normal;
+    float distance;
+};
+
 
 RWStructuredBuffer<float3> _CurrentPoints;
-RWStructuredBuffer<float3> _TargetPoints;
+RWStructuredBuffer<float3> _VisiblePoints;
+
+RWStructuredBuffer<uint> _ArgsBuffer;
+
+RWStructuredBuffer<FrustumPlane> _FrustumPlanesBuffer;
+
 RWStructuredBuffer<MathCoreM4x4> _AttractorMatrices;
 
 
 uint particleCount;
 int affineTransformationCount;
 
+
+int currentFrame;
 
 
 
@@ -26,26 +38,28 @@ float hash(uint n) {
    return float(n & uint(0x7fffffffU)) / float(0x7fffffff);
 }
 
-
-
 [numthreads(256,1,1)]
 void InitialiseAttractorPoints(uint3 id : SV_DispatchThreadID)
 {
-    float3 pos = float3(id.x, 0, 0);
+    uint rng = id.x * 6546456 + currentFrame * 12356;
+
+    float3 pos = float3(
+    hash(rng) * 2 - 1,
+    hash(rng) * 2 - 1,
+    0);
  
     _CurrentPoints[id.x] = pos;
-    _TargetPoints[id.x] = pos;
 }
 
 
 [numthreads(256,1,1)]
 void IterateCurrentPoints(uint3 id : SV_DispatchThreadID)
 {
-   if (id.x >= particleCount) {return;}
+    if (id.x >= particleCount) {return;}
     float3 pos = _CurrentPoints[id.x];
     
     uint seed = id.x;
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 20; i++)
     {
         seed += i * 1926783;
         float r = hash(seed);
@@ -57,21 +71,32 @@ void IterateCurrentPoints(uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(256,1,1)]
-void IterateTargetPoints(uint3 id : SV_DispatchThreadID)
+void CullInvisibleInstances(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= particleCount) {return;}
-    float3 pos = _TargetPoints[id.x];
+    float3 pos = _CurrentPoints[id.x];
     
-    uint seed = id.x;
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 6; i++)
     {
-        seed += i * 1926783;
-        float r = hash(seed);
-    
-        uint index = (uint)(r * affineTransformationCount);
-        pos = MathCoreMul(_AttractorMatrices[index],float4(pos,1)).xyz;
+        float ndotplusd = (dot(pos, _FrustumPlanesBuffer[i].normal) + _FrustumPlanesBuffer[i].distance);
+        if (ndotplusd < 0.0f)
+        {
+        return;
+        }
     }
-    _TargetPoints[id.x] = pos;
+    
+    uint writeIndex;
+    InterlockedAdd(_ArgsBuffer[1],(uint)1,writeIndex);
+    _VisiblePoints[writeIndex] = pos;
+}
+
+
+
+
+[numthreads(1,1,1)]
+void resetInstanceCount (uint3 id : SV_DispatchThreadID)
+{
+    _ArgsBuffer[1] = 0;
 }
 
 

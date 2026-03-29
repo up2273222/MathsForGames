@@ -82,6 +82,7 @@ public class Test : MonoBehaviour
 
         
         //Q5
+        /*
         float yawDeg = 30;
         float pitchDeg = 20;
 
@@ -124,20 +125,19 @@ public class Test : MonoBehaviour
        Debug.Log((float)final2.y);
        Debug.Log((float)final2.z);
 
+     
+    //Q9 = 10.4*/
+    
+        float angle = 60;
+        Vector3 axis = new Vector3(0.2673f, 0.5345f, 0.8018f);
+        Quat outQ = new Quat(angle, axis);
+        Debug.Log(outQ.w);
+        Debug.Log(outQ.x);
+        Debug.Log(outQ.y);
+        Debug.Log(outQ.z);
         
-
-
-
-
-
-
-
-    //Q9 = 10.4
-
-
-
-
-
+        
+  
 
 
 
